@@ -1,8 +1,8 @@
 # Sample Hardhat Project
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
-
-Try running some of the following tasks:
+The repo consists of 2 contracts, to implement a cross chain interaction using connext
+The 2 contracts have there seperate deployement scripts and may be used to deploy contracts on different chain
+You can copy the .env.example and plug your API keys to run the deploy scripts
 
 ```shell
 npx hardhat help
