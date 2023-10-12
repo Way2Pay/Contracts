@@ -1,10 +1,13 @@
+
+//0x73ba674cdB87B367853c6Ab83A8e8FDFBBb3F4df
+
 async function main() {
   const currentTimestampInSeconds = Math.round(Date.now() / 1000);
   const unlockTime = currentTimestampInSeconds + 60;
 
 
-  const dest = await ethers.getContractFactory("DestinationGreeter");
-  const lock = await dest.deploy("0xFCa08024A6D4bCc87275b1E4A1E22B71fAD7f649","0xE592427A0AEce92De3Edee1F18E0157C05861564");
+  const source = await ethers.getContractFactory("SourceGreeter");
+  const lock = await source.deploy("0x2334937846Ab2A3FCE747b32587e1A1A2f6EEC5a","0x7ea6eA49B0b0Ae9c5db7907d139D9Cd3439862a1","0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6");
 
   await lock.waitForDeployment();
 
