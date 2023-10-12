@@ -27,10 +27,13 @@ contract DestinationGreeter is ForwarderXReceiver {
       swapRouter = ISwapRouter(_swapRouter);
     }
 
+  
   function swapExactInputSingle(address token0, address token1, uint256 amountIn) external returns (uint256 amountOut) {
 
         IERC20 tokenA = IERC20(token0);
-        tokenA.approve(address(swapRouter), amountIn);
+        uint256 amountToTrade;
+        amountToTrade= tokenA.balanceOf(address(this));
+        tokenA.approve(address(swapRouter), amountToTrade);
 
         ISwapRouter.ExactInputSingleParams memory params =
             ISwapRouter.ExactInputSingleParams({
@@ -39,7 +42,7 @@ contract DestinationGreeter is ForwarderXReceiver {
                 fee: 3000,
                 recipient: address(this),
                 deadline: block.timestamp,
-                amountIn: amountIn,
+                amountIn: amountToTrade,
                 amountOutMinimum: 0,
                 sqrtPriceLimitX96: 0
             });
