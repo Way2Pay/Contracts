@@ -4,7 +4,7 @@ async function main() {
 
 
   const dest = await ethers.getContractFactory("DestinationGreeter");
-  const lock = await dest.deploy("0xFCa08024A6D4bCc87275b1E4A1E22B71fAD7f649","0xE592427A0AEce92De3Edee1F18E0157C05861564");
+  const lock = await dest.deploy("0x7ea6eA49B0b0Ae9c5db7907d139D9Cd3439862a1","0xE592427A0AEce92De3Edee1F18E0157C05861564");
 
   await lock.waitForDeployment();
 

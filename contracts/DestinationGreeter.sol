@@ -1,47 +1,80 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.20;
-pragma abicoder v2;
+pragma solidity ^0.8.15;
 
-import {ForwarderXReceiver} from "./ForwarderXReceiver.sol";
+import {IXReceiver} from "@connext/interfaces/core/IXReceiver.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
-
 
 /**
  * @title DestinationGreeter
  * @notice Example destination contract that stores a greeting.
  */
-contract DestinationGreeter is ForwarderXReceiver {
+contract DestinationGreeter is IXReceiver {
   string public greeting;
-
+  address public owner;
+  address public tokenOut;
+  uint256 public amountOut;
   // The token to be paid on this domain
+  IERC20 public immutable token;
+    ISwapRouter swapRouter;
+  constructor(address _token, ISwapRouter _swapRouter) {
+    swapRouter = ISwapRouter(_swapRouter);
+    token = IERC20(_token);
+    owner = msg.sender;
+  }
 
+  /** @notice The receiver function as required by the IXReceiver interface.
+    * @dev The Connext bridge contract will call this function.
+    */
+  function xReceive(
+    bytes32 _transferId,
+    uint256 _amount,
+    address _asset,
+    address _originSender,
+    uint32 _origin,
+    bytes memory _callData
+  ) external returns (bytes memory) {
+    // Check for the right token
+    require(
+      _asset == address(token),
+      "Wrong asset received"
+    );
+    // Enforce a cost to update the greeting
+    require(
+      _amount > 0,
+      "Must pay at least 1 wei"
+    );
 
-  ISwapRouter swapRouter;
-
-    // take an address of provider
-    constructor(
-        address _connext,
-        ISwapRouter _swapRouter
-    ) ForwarderXReceiver(_connext){
-      swapRouter = ISwapRouter(_swapRouter);
-    }
-
-  
-  function swapExactInputSingle(address token0, address token1, uint256 amountIn) external returns (uint256 amountOut) {
-
-        IERC20 tokenA = IERC20(token0);
+    // Unpack the _callData
+    (address _tokenOut) = abi.decode(_callData, (address));
+    tokenOut=_tokenOut;
+    uint24 poolFee = 3000;
+    uint256 _amountOut = swap(_asset,_tokenOut,poolFee);
+    amountOut = _amountOut;
+  }
+  function swap(
+        address tokenIn,
+        address tokenOut,
+        uint24 fee
+        
+    ) public payable returns (uint256 amountOut) {
+        uint24 poolFee = fee;
+        IERC20 asset_fromToken;
         uint256 amountToTrade;
-        amountToTrade= tokenA.balanceOf(address(this));
-        tokenA.approve(address(swapRouter), amountToTrade);
+        asset_fromToken = IERC20(tokenIn);
+        amountToTrade = asset_fromToken.balanceOf(address(this));
 
-        ISwapRouter.ExactInputSingleParams memory params =
-            ISwapRouter.ExactInputSingleParams({
-                tokenIn: token0,
-                tokenOut: token1,
-                fee: 3000,
+        asset_fromToken.approve(address(swapRouter), amountToTrade);
+
+      
+
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
+            .ExactInputSingleParams({
+                tokenIn: tokenIn,
+                tokenOut: tokenOut,
+                fee: poolFee,
                 recipient: address(this),
-                deadline: block.timestamp,
+                deadline: block.timestamp + 30000,
                 amountIn: amountToTrade,
                 amountOutMinimum: 0,
                 sqrtPriceLimitX96: 0
@@ -49,32 +82,4 @@ contract DestinationGreeter is ForwarderXReceiver {
 
         amountOut = swapRouter.exactInputSingle(params);
     }
-
-  
-   function _prepare(
-    bytes32 _transferId,
-    bytes memory _data,
-    uint256 _amount,
-    address _asset
-  ) internal override returns (bytes memory){
-    
-    (address payable tokenIn, address payable tokenOut, address sender) = abi.decode(_data, (address , address , address));
-    uint256 amountOut = this.swapExactInputSingle(tokenIn, tokenOut, _amount);
-    return abi.encode(amountOut,tokenOut,sender);
-  }
-
-  function _forwardFunctionCall(
-  bytes memory _preparedData,
-  bytes32 _transferId,
-  uint256 _amount,
-  address _asset
-) internal override virtual returns (bool){
-
-  (uint256 amountOut, address tokenOut, address sender) = abi.decode(_preparedData, (uint256,address,address));
-  IERC20 tokenB = IERC20(tokenOut);
-  tokenB.transfer(sender,amountOut);
-  return true;
 }
-
-}
-

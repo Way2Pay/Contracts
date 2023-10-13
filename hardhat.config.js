@@ -5,7 +5,7 @@ require('dotenv').config()
 module.exports = {
   solidity: "0.8.21",
   etherscan:{
-    apiKey: process.env.POLYGONSCAN
+    apiKey: process.env.ETHERSCAN,
   },
   networks:{
     goerli:{
