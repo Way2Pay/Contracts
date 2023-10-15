@@ -15,13 +15,18 @@ contract DestinationGreeter is IXReceiver {
   address public tokenOut;
   uint256 public amountOut;
   // The token to be paid on this domain
-  IERC20 public immutable token;
+  IERC20 public token;
     ISwapRouter swapRouter;
   constructor(address _token, ISwapRouter _swapRouter) {
     swapRouter = ISwapRouter(_swapRouter);
     token = IERC20(_token);
     owner = msg.sender;
   }
+
+   modifier onlyOwner {
+      require(msg.sender == owner);
+      _;
+   }
 
   /** @notice The receiver function as required by the IXReceiver interface.
     * @dev The Connext bridge contract will call this function.
@@ -82,4 +87,7 @@ contract DestinationGreeter is IXReceiver {
 
         amountOut = swapRouter.exactInputSingle(params);
     }
+  function updateToken(address _token) external onlyOwner {
+    token = IERC20(_token);
+  }
 }
