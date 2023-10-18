@@ -14,6 +14,10 @@ contract DestinationGreeter is IXReceiver {
   address public owner;
   address public tokenOut;
   uint256 public amountOut;
+
+  //events
+  event TransferCompleted(bytes32 indexed _tId, uint32 indexed _originDomain, address indexed _from, address indexed _to, address indexed _inputToken, address indexed _outputToken, uint256 indexed _amountIn, address indexed _amountOut);
+
   // The token to be paid on this domain
   IERC20 public token;
     ISwapRouter swapRouter;
@@ -56,6 +60,8 @@ contract DestinationGreeter is IXReceiver {
     uint24 poolFee = 3000;
     uint256 _amountOut = swap(_asset,_tokenOut,poolFee);
     amountOut = _amountOut;
+    emit TransferCompleted(_transferId, _origin, _originSender, address(this), _asset, _tokenOut, _amount, _amountOut);
+
   }
   function swap(
         address tokenIn,
