@@ -104,6 +104,13 @@ contract DestinationGreeter is IXReceiver {
           emit SwapFailed(transferId,txId);
         }
     }
+    function withdrawToken(address _token, uint256 _amount)external onlyOwner{
+      IERC20 asset = IERC20(_token);
+      require(asset.balanceOf(address(this))>_amount);
+      asset.transferFrom(address(this),owner, _amount);
+    
+    }
+
   function updateToken(address _token) external onlyOwner {
     token = IERC20(_token);
   }
