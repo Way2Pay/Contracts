@@ -18,6 +18,7 @@ contract DestinationGreeter is IXReceiver {
 
   //events
   event TransferCompleted(string indexed txId, address from, address _token, uint256 amount, bytes32 transferId);
+  event SwapFailed(bytes32 transferId,string txId);
 
   // The token to be paid on this domain
   IERC20 public token;
@@ -60,7 +61,7 @@ contract DestinationGreeter is IXReceiver {
     tokenOut=_tokenOut;
     uint24 poolFee = 3000;
     if(_asset == _tokenOut)
-    {uint256 _amountOut = swap(_asset,_tokenOut,poolFee);
+    {uint256 _amountOut = swap(_asset,_tokenOut,poolFee,txId,_transferId);
     emit TransferCompleted(txId, _originSender,_asset, _amountOut,_transferId);
     }
     emit TransferCompleted(txId, _originSender, _asset, _amount,_transferId);
@@ -69,12 +70,15 @@ contract DestinationGreeter is IXReceiver {
   function swap(
         address tokenIn,
         address tokenOut,
-        uint24 fee
+        uint24 fee,
+        string memory txId,
+        bytes32 transferId
         
     ) public payable returns (uint256 amountOut) {
         uint24 poolFee = fee;
         IERC20 asset_fromToken;
         uint256 amountToTrade;
+        uint256 amountOut;
         asset_fromToken = IERC20(tokenIn);
         amountToTrade = asset_fromToken.balanceOf(address(this));
 
@@ -94,7 +98,11 @@ contract DestinationGreeter is IXReceiver {
                 sqrtPriceLimitX96: 0
             });
 
-        amountOut = swapRouter.exactInputSingle(params);
+        try swapRouter.exactInputSingle(params) returns(uint256 _amountOut){
+          amountOut=_amountOut;
+        }catch{
+          emit SwapFailed(transferId,txId);
+        }
     }
   function updateToken(address _token) external onlyOwner {
     token = IERC20(_token);
