@@ -18,9 +18,6 @@ contract SourceGreeter {
   // Slippage (in BPS) for the transfer set to 100% for this example
   uint256 public immutable slippage = 10000;
 
-  //events
-  event xCallSent(address indexed _connextAddress, address indexed _from, address indexed _targetContract, address indexed _targetDomain,address indexed _inputToken,address indexed _outputToken ,uint256 indexed _amount);
-
   constructor(address _connext, address _token) {
     connext = IConnext(_connext);
     token = IERC20(_token);
@@ -63,7 +60,5 @@ contract SourceGreeter {
       slippage,          // _slippage: max slippage the user will accept in BPS (e.g. 300 = 3%)
       callData           // _callData: the encoded calldata to send
     );
-    emit xCallSent(connext, msg.sender, target,destinationDomain,address(token),tokenOut ,amount);
-
   }
 }

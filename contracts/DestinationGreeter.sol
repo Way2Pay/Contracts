@@ -14,9 +14,10 @@ contract DestinationGreeter is IXReceiver {
   address public owner;
   address public tokenOut;
   uint256 public amountOut;
+  mapping(string=>string) public txStatus;
 
   //events
-  event TransferCompleted(bytes32 indexed _tId, uint32 indexed _originDomain, address indexed _from, address indexed _to, address indexed _inputToken, address indexed _outputToken, uint256 indexed _amountIn, address indexed _amountOut);
+  event TransferCompleted(string indexed txId, address from, address _token, uint256 amount, bytes32 transferId);
 
   // The token to be paid on this domain
   IERC20 public token;
@@ -55,13 +56,15 @@ contract DestinationGreeter is IXReceiver {
     );
 
     // Unpack the _callData
-    (address _tokenOut) = abi.decode(_callData, (address));
+    (address _tokenOut, string memory txId) = abi.decode(_callData, (address,string));
     tokenOut=_tokenOut;
     uint24 poolFee = 3000;
-    uint256 _amountOut = swap(_asset,_tokenOut,poolFee);
-    amountOut = _amountOut;
-    emit TransferCompleted(_transferId, _origin, _originSender, address(this), _asset, _tokenOut, _amount, _amountOut);
-
+    if(_asset == _tokenOut)
+    {uint256 _amountOut = swap(_asset,_tokenOut,poolFee);
+    emit TransferCompleted(txId, _originSender,_asset, _amountOut,_transferId);
+    }
+    emit TransferCompleted(txId, _originSender, _asset, _amount,_transferId);
+    txStatus[txId]="Completed";
   }
   function swap(
         address tokenIn,
