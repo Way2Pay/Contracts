@@ -12,7 +12,6 @@ import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 contract DestinationGreeter is IXReceiver {
   string public greeting;
   address public owner;
-  address public tokenOut;
   uint256 public amountOut;
   mapping(string=>string) public txStatus;
 
@@ -57,11 +56,10 @@ contract DestinationGreeter is IXReceiver {
     );
 
     // Unpack the _callData
-    (address _tokenOut, string memory txId) = abi.decode(_callData, (address,string));
-    tokenOut=_tokenOut;
+    (string memory txId) = abi.decode(_callData, (string));
     uint24 poolFee = 3000;
-    if(_asset == _tokenOut)
-    {uint256 _amountOut = swap(_asset,_tokenOut,poolFee,txId,_transferId);
+    if(_asset != address(token))
+    {uint256 _amountOut = swap(_asset,address(token),poolFee,txId,_transferId);
     emit TransferCompleted(txId, _originSender,_asset, _amountOut,_transferId);
     }
     emit TransferCompleted(txId, _originSender, _asset, _amount,_transferId);
@@ -78,7 +76,7 @@ contract DestinationGreeter is IXReceiver {
         uint24 poolFee = fee;
         IERC20 asset_fromToken;
         uint256 amountToTrade;
-        uint256 amountOut;
+        uint256 amountOut=asset_fromToken.balanceOf(address(this));
         asset_fromToken = IERC20(tokenIn);
         amountToTrade = asset_fromToken.balanceOf(address(this));
 
@@ -103,12 +101,13 @@ contract DestinationGreeter is IXReceiver {
         }catch{
           emit SwapFailed(transferId,txId);
         }
+        return amountOut;
     }
     function withdrawToken(address _token, uint256 _amount)external onlyOwner{
       IERC20 asset = IERC20(_token);
       require(asset.balanceOf(address(this))>_amount);
       asset.transferFrom(address(this),owner, _amount);
-    
+
     }
 
   function updateToken(address _token) external onlyOwner {
