@@ -12,7 +12,6 @@ import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 contract DestinationGreeter is IXReceiver {
   string public greeting;
   address public owner;
-  uint256 public amountOut;
   mapping(string=>string) public txStatus;
 
   //events
@@ -20,11 +19,11 @@ contract DestinationGreeter is IXReceiver {
   event SwapFailed(bytes32 transferId,string txId);
 
   // The token to be paid on this domain
-  IERC20 public token;
+  address public token;
     ISwapRouter swapRouter;
   constructor(address _token, ISwapRouter _swapRouter) {
     swapRouter = ISwapRouter(_swapRouter);
-    token = IERC20(_token);
+    token = _token;
     owner = msg.sender;
   }
 
@@ -45,10 +44,6 @@ contract DestinationGreeter is IXReceiver {
     bytes memory _callData
   ) external returns (bytes memory) {
     // Check for the right token
-    require(
-      _asset == address(token),
-      "Wrong asset received"
-    );
     // Enforce a cost to update the greeting
     require(
       _amount > 0,
@@ -76,10 +71,9 @@ contract DestinationGreeter is IXReceiver {
         uint24 poolFee = fee;
         IERC20 asset_fromToken;
         uint256 amountToTrade;
-        uint256 amountOut=asset_fromToken.balanceOf(address(this));
         asset_fromToken = IERC20(tokenIn);
         amountToTrade = asset_fromToken.balanceOf(address(this));
-
+        amountOut=amountToTrade;
         asset_fromToken.approve(address(swapRouter), amountToTrade);
 
       
@@ -98,10 +92,10 @@ contract DestinationGreeter is IXReceiver {
 
         try swapRouter.exactInputSingle(params) returns(uint256 _amountOut){
           amountOut=_amountOut;
+          return amountOut;
         }catch{
           emit SwapFailed(transferId,txId);
         }
-        return amountOut;
     }
     function withdrawToken(address _token, uint256 _amount)external onlyOwner{
       IERC20 asset = IERC20(_token);
@@ -111,6 +105,6 @@ contract DestinationGreeter is IXReceiver {
     }
 
   function updateToken(address _token) external onlyOwner {
-    token = IERC20(_token);
+    token = _token;
   }
 }
